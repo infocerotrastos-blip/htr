@@ -547,6 +547,15 @@
           <input type="checkbox" id="zbe">
           <span>Está en una Zona de Bajas Emisiones o con acceso muy restringido para furgonetas</span>
         </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="hayResiduosPeligrosos">
+          <span>Hay residuos peligrosos que gestionar (amianto/uralita, pinturas, disolventes)</span>
+        </div>
+        <div class="field" id="hazardFieldWrap" style="display:none;">
+          <label for="hazardM3">m³ aproximados de residuos peligrosos</label>
+          <input type="number" id="hazardM3" min="0.5" step="0.5" value="2">
+          <p class="hint">Coste real de gestión especializada según normativa vigente, con tarifa por m³ ajustada a tu zona (verás el importe exacto en el desglose). Es una estimación orientativa; el volumen final se confirma con fotos o visita.</p>
+        </div>
 
         <button class="btn btn-brand" id="calcBtn" style="width:100%; justify-content:center; padding:14px;">Ver mi presupuesto estimado</button>
       </div>
@@ -560,7 +569,7 @@
           <div class="result-range" id="resultRange">0 € – 0 €</div>
           <div class="result-sub" id="resultRateEq"></div>
           <ul class="result-breakdown" id="resultBreakdown"></ul>
-          <p class="result-disclaimer">Estimación orientativa, no vinculante. El precio final se confirma con fotos, vídeo o visita, según volumen real, dificultad de acceso y gestión de residuos. El IVA (21%) se muestra siempre como partida separada del subtotal del servicio. No incluye residuos peligrosos (amianto, pinturas, disolventes), que se presupuestan aparte.</p>
+          <p class="result-disclaimer">Estimación orientativa, no vinculante. El precio final se confirma con fotos, vídeo o visita, según volumen real, dificultad de acceso y gestión de residuos. El IVA (21%) se muestra siempre como partida separada del subtotal del servicio. Los residuos peligrosos (amianto, pinturas, disolventes) solo se incluyen si marcas esa casilla arriba; su volumen final se confirma con fotos o visita.</p>
           <div class="calc-actions">
             <a href="#" id="waResultBtn" class="btn btn-whatsapp" target="_blank" rel="noopener">Confirmar por WhatsApp</a>
           </div>
@@ -666,7 +675,7 @@
       </details>
       <details>
         <summary>¿Qué pasa si hay residuos peligrosos (amianto, pinturas, disolventes)?</summary>
-        <p>Este tipo de materiales requiere una gestión especializada sujeta a normativa específica y no está incluido en la estimación de la calculadora. Coméntanoslo al pedir presupuesto y te indicamos ese coste aparte, sin sorpresas en el presupuesto final.</p>
+        <p>Este tipo de materiales requiere una gestión especializada sujeta a normativa específica. Ya puedes marcarlo directamente en la calculadora indicando el volumen aproximado para incluirlo en la estimación; el coste final se confirma siempre con fotos o visita.</p>
       </details>
     </div>
   </div>
@@ -843,6 +852,14 @@
 
   const SURCHARGE_NO_LIFT = 0.18; // media del 15%-20% que aplica la competencia
   const SURCHARGE_ZBE = 40;       // media de 30€-50€ por gestión de acceso/permisos
+  // €/m³ gestión de residuos peligrosos (amianto, pinturas, disolventes), por zona.
+  // Cifra base 142-161€/m³ tomada de generadores de precios para Madrid (informe 31/07/2026).
+  // En CLM y CyL el informe indica cánones "similares o algo inferiores"; aplicamos la misma
+  // reducción proporcional que ya usa el Tarifa_Base (~15%) hasta confirmar cifra local exacta.
+  const HAZARD_RATES = {
+    madrid: [142, 161],
+    clm_cyl: [120, 137]
+  };
   const IVA_RATE = 0.21;          // IVA general repercutido siempre como partida aparte
   const MIN_SUBTOTAL = 90;        // subtotal mínimo (sin IVA) para cubrir desplazamiento y mínimos de gestión
 
@@ -886,6 +903,12 @@
     tipoDesc.textContent = ACCUMULATION_LEVELS[nivelSelect.value].desc;
   }
   nivelSelect.addEventListener("change", updateTipoDesc);
+
+  const hazardCheckbox = document.getElementById("hayResiduosPeligrosos");
+  const hazardFieldWrap = document.getElementById("hazardFieldWrap");
+  hazardCheckbox.addEventListener("change", () => {
+    hazardFieldWrap.style.display = hazardCheckbox.checked ? "block" : "none";
+  });
   updateTipoDesc();
 
   /* ======================= GAUGE ANIMATION ======================= */
@@ -924,6 +947,8 @@
     const level = ACCUMULATION_LEVELS[levelKey];
     const noLift = document.getElementById("sinAscensor").checked;
     const zbe = document.getElementById("zbe").checked;
+    const hazard = document.getElementById("hayResiduosPeligrosos").checked;
+    const hazardM3 = Math.max(0.5, parseFloat(document.getElementById("hazardM3").value) || 0);
 
     const [rateLowBase, rateHighBase] = propType.rates[zone.bucket];
 
@@ -940,6 +965,14 @@
       subtotalLow += SURCHARGE_ZBE;
       subtotalHigh += SURCHARGE_ZBE;
       appliedSurcharges.push("Zona de bajas emisiones / acceso restringido: +" + SURCHARGE_ZBE + " €");
+    }
+    if (hazard) {
+      const [hazardRateLow, hazardRateHigh] = HAZARD_RATES[zone.bucket];
+      const hazardLow = Math.round(hazardM3 * hazardRateLow);
+      const hazardHigh = Math.round(hazardM3 * hazardRateHigh);
+      subtotalLow += hazardLow;
+      subtotalHigh += hazardHigh;
+      appliedSurcharges.push("Residuos peligrosos (" + hazardM3 + " m³): +" + hazardLow.toLocaleString("es-ES") + " € – +" + hazardHigh.toLocaleString("es-ES") + " €");
     }
 
     subtotalLow = Math.max(subtotalLow, MIN_SUBTOTAL);
