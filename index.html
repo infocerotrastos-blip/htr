@@ -288,7 +288,7 @@
   .modal-overlay.open{display:flex;}
   .modal{
     background:var(--surface-raised); border-radius:18px; padding:32px; max-width:440px; width:100%;
-    position:relative;
+    position:relative; max-height:90vh; overflow-y:auto;
   }
   .modal h3{font-size:22px;}
   .modal p.sub{color:var(--ink-soft); font-size:14px; margin-top:-6px;}
@@ -722,6 +722,7 @@
   </div>
 </section>
 
+
 <footer>
   <div class="wrap footer-grid">
     <div>
@@ -747,7 +748,7 @@
       <p><a href="aviso-legal.html">Aviso legal y protección de datos</a></p>
     </div>
   </div>
-  <div class="bottom wrap">cerotrastos.com · <a href="aviso-legal.html">Aviso legal</a> · <a href="aviso-legal.html#proteccion-datos">Política de privacidad</a></div>
+  <div class="bottom wrap">cerotrastos.com · <a href="aviso-legal.html">Aviso legal</a> · <a href="estadisticas.html">Equipo</a> · <a href="aviso-legal.html#proteccion-datos">Política de privacidad</a> · <a href="#" id="jobModalTrigger">Trabaja con nosotros</a></div>
 </footer>
 
 <a href="#" id="floatWaBtn" class="wa-float" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
@@ -778,6 +779,39 @@
       </div>
       <div class="form-error" id="leadError">Revisa los campos: nombre, teléfono y email son obligatorios.</div>
       <button type="submit" class="btn btn-brand" style="width:100%; justify-content:center; padding:14px; margin-top:6px;">Ver mi presupuesto</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="jobModalOverlay">
+  <div class="modal">
+    <button class="modal-close" id="jobModalClose" aria-label="Cerrar">✕</button>
+    <span class="eyebrow">Únete al equipo</span>
+    <h3>Trabaja con nosotros</h3>
+    <p class="sub">¿Quieres colaborar con Cero Trastos? Cuéntanos quién eres y qué puedes aportar. <strong>Este formulario no guarda tus datos en ninguna base de datos</strong>: se envían directamente por correo a nuestro equipo, que te contactará si encaja.</p>
+    <form id="jobForm">
+      <div class="field">
+        <label for="jobNombre">Tu nombre</label>
+        <input type="text" id="jobNombre" required maxlength="80">
+      </div>
+      <div class="field">
+        <label for="jobEmail">Tu email</label>
+        <input type="email" id="jobEmail" required maxlength="120">
+      </div>
+      <div class="field">
+        <label for="jobTelefono">Tu teléfono (opcional)</label>
+        <input type="tel" id="jobTelefono" maxlength="20">
+      </div>
+      <div class="field">
+        <label for="jobMensaje">Cuéntanos sobre ti</label>
+        <textarea id="jobMensaje" required maxlength="1500" rows="5" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--hairline); background:var(--surface); font-family:'Inter',sans-serif; font-size:15px; color:var(--ink); resize:vertical;" placeholder="Experiencia, disponibilidad, zona en la que te movilizas..."></textarea>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="jobConsent" required>
+        <span>Acepto que estos datos se envíen por email a Cero Trastos únicamente para evaluar mi candidatura, según se explica en el <a href="aviso-legal.html#proteccion-datos" target="_blank" rel="noopener">aviso legal</a>.</span>
+      </div>
+      <button type="submit" class="btn btn-brand" style="width:100%; justify-content:center; padding:14px;">Enviar candidatura</button>
+      <p id="jobMsg" class="review-msg"></p>
     </form>
   </div>
 </div>
@@ -1080,6 +1114,18 @@
     if (e.target === modalOverlay) modalOverlay.classList.remove("open");
   });
 
+  const jobModalOverlay = document.getElementById("jobModalOverlay");
+  document.getElementById("jobModalTrigger").addEventListener("click", (e) => {
+    e.preventDefault();
+    jobModalOverlay.classList.add("open");
+  });
+  document.getElementById("jobModalClose").addEventListener("click", () => {
+    jobModalOverlay.classList.remove("open");
+  });
+  jobModalOverlay.addEventListener("click", (e) => {
+    if (e.target === jobModalOverlay) jobModalOverlay.classList.remove("open");
+  });
+
   leadForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const nombre = document.getElementById("leadNombre").value.trim();
@@ -1239,6 +1285,59 @@
     reviewMsg.classList.add("show", "ok");
     reviewForm.reset();
     submitBtn.disabled = false;
+  });
+
+  /* ======================= TRABAJA CON NOSOTROS ======================= */
+  const jobForm = document.getElementById("jobForm");
+  const jobMsg = document.getElementById("jobMsg");
+  jobForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById("jobNombre").value.trim();
+    const email = document.getElementById("jobEmail").value.trim();
+    const telefono = document.getElementById("jobTelefono").value.trim();
+    const mensaje = document.getElementById("jobMensaje").value.trim();
+    const consent = document.getElementById("jobConsent").checked;
+
+    jobMsg.className = "review-msg";
+    if (!nombre || !email || !mensaje || !consent) {
+      jobMsg.textContent = "Rellena tu nombre, email, mensaje y acepta el envío de tus datos.";
+      jobMsg.classList.add("show", "err");
+      return;
+    }
+
+    const jobBtn = jobForm.querySelector('button[type="submit"]');
+    jobBtn.disabled = true;
+
+    try {
+      const res = await fetch(SUPABASE_URL + "/functions/v1/job-application", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ nombre, email, telefono, mensaje })
+      });
+      if (!res.ok) {
+        const detalle = await res.text().catch(() => "");
+        console.error("No se pudo enviar la candidatura (HTTP " + res.status + "):", detalle);
+        jobMsg.textContent = "No se pudo enviar tu candidatura. Inténtalo de nuevo en unos minutos.";
+        jobMsg.classList.add("show", "err");
+        jobBtn.disabled = false;
+        return;
+      }
+    } catch (err) {
+      console.error("No se pudo enviar la candidatura (error de red):", err);
+      jobMsg.textContent = "No se pudo enviar tu candidatura. Comprueba tu conexión e inténtalo de nuevo.";
+      jobMsg.classList.add("show", "err");
+      jobBtn.disabled = false;
+      return;
+    }
+
+    jobMsg.textContent = "¡Gracias! Hemos recibido tu candidatura y te contactaremos si encaja.";
+    jobMsg.classList.add("show", "ok");
+    jobForm.reset();
+    jobBtn.disabled = false;
   });
 </script>
 
