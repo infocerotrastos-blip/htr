@@ -793,6 +793,27 @@
   const SUPABASE_URL = "https://sxkyswluaenkeeuqqunc.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4a3lzd2x1YWVua2VldXFxdW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NjUxNTMsImV4cCI6MjEwMDI0MTE1M30.WIBUD0K4AClmI7f697yZbAyFsr9FelmITWYz81Kc_m0";
 
+  /* ======================= CONTADOR DE VISITAS (sin cookies) ======================= */
+  (function trackPageView() {
+    try {
+      let sid = sessionStorage.getItem("ct_sid");
+      if (!sid) {
+        sid = Date.now().toString(36) + Math.random().toString(36).slice(2);
+        sessionStorage.setItem("ct_sid", sid);
+      }
+      fetch(SUPABASE_URL + "/rest/v1/page_views", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null, session_id: sid })
+      }).catch(() => {});
+    } catch (e) {}
+  })();
+
   /* ======================= DATA ======================= */
   // Zona de arranque: solo se factura donde realmente se presta servicio.
   // El resto de comunidades autónomas se ha retirado del código hasta que
