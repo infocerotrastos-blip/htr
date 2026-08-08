@@ -148,6 +148,25 @@
       </div>
     </div>
 
+    <div id="recoveryView" style="display:none;">
+      <div class="login-card">
+        <span class="eyebrow">Recuperar acceso</span>
+        <h1 style="font-size:22px; margin-bottom:22px;">Elige una contraseña nueva</h1>
+        <form id="recoveryForm">
+          <div class="field">
+            <label for="recoveryPassword">Contraseña nueva</label>
+            <input type="password" id="recoveryPassword" required autocomplete="new-password" minlength="6">
+          </div>
+          <div class="field">
+            <label for="recoveryPassword2">Repite la contraseña</label>
+            <input type="password" id="recoveryPassword2" required autocomplete="new-password" minlength="6">
+          </div>
+          <button type="submit" class="btn" id="recoveryBtn">Guardar contraseña</button>
+          <p class="login-error" id="recoveryError"></p>
+        </form>
+      </div>
+    </div>
+
     <div id="dashboard">
       <div class="top-actions">
         <div>
@@ -418,8 +437,63 @@
     loginView.style.display = "block";
   });
 
+  /* ======================= RECUPERAR CONTRASEÑA ======================= */
+  const recoveryView = document.getElementById("recoveryView");
+  const recoveryForm = document.getElementById("recoveryForm");
+  const recoveryError = document.getElementById("recoveryError");
+  const recoveryBtn = document.getElementById("recoveryBtn");
+
+  function parseHashParams() {
+    const hash = location.hash.startsWith("#") ? location.hash.slice(1) : location.hash;
+    return new URLSearchParams(hash);
+  }
+
+  const hashParams = parseHashParams();
+  const recoveryToken = hashParams.get("access_token");
+  const isRecovery = hashParams.get("type") === "recovery" && recoveryToken;
+
+  if (isRecovery) {
+    loginView.style.display = "none";
+    recoveryView.style.display = "block";
+  }
+
+  recoveryForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    recoveryError.classList.remove("show");
+    const pass1 = document.getElementById("recoveryPassword").value;
+    const pass2 = document.getElementById("recoveryPassword2").value;
+    if (pass1 !== pass2) {
+      recoveryError.textContent = "Las dos contraseñas no coinciden.";
+      recoveryError.classList.add("show");
+      return;
+    }
+    recoveryBtn.disabled = true;
+    try {
+      const res = await fetch(SUPABASE_URL + "/auth/v1/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + recoveryToken
+        },
+        body: JSON.stringify({ password: pass1 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || "No se pudo actualizar la contraseña.");
+      history.replaceState(null, "", location.pathname);
+      recoveryView.style.display = "none";
+      loginView.style.display = "block";
+      showError("Contraseña actualizada. Ya puedes iniciar sesión con la nueva.");
+    } catch (err) {
+      recoveryError.textContent = err.message || "No se pudo actualizar la contraseña.";
+      recoveryError.classList.add("show");
+    } finally {
+      recoveryBtn.disabled = false;
+    }
+  });
+
   const savedToken = sessionStorage.getItem(TOKEN_KEY);
-  if (savedToken) {
+  if (!isRecovery && savedToken) {
     loadDashboard(savedToken);
   }
 </script>
