@@ -280,6 +280,25 @@
   }
   @media (prefers-reduced-motion: reduce){ .wa-float{animation:none;} }
 
+  /* Banner de cookies */
+  .cookie-banner{
+    position:fixed; left:16px; right:16px; bottom:16px; z-index:70;
+    max-width:640px; margin:0 auto;
+    background:var(--ink); color:#EDEEE8; border-radius:14px; padding:18px 20px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:14px;
+    box-shadow:0 12px 32px rgba(0,0,0,.25);
+  }
+  .cookie-banner p{margin:0; font-size:13.5px; line-height:1.5; color:#D7D5C9; flex:1 1 260px;}
+  .cookie-banner a{color:#fff; text-decoration:underline;}
+  .cookie-banner .cookie-actions{display:flex; gap:10px; flex:0 0 auto;}
+  .cookie-banner button{
+    border:none; cursor:pointer; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .cookie-accept{background:var(--brand); color:#fff;}
+  .cookie-reject{background:transparent; color:#D7D5C9; border:1px solid #4B5049 !important;}
+  @media(max-width:480px){ .cookie-banner{flex-direction:column; align-items:stretch;} .cookie-banner .cookie-actions{justify-content:flex-end;} }
+
   /* Modal */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(24,27,25,.55); z-index:100;
@@ -738,6 +757,14 @@
   <div class="bottom wrap">cerotrastos.com · <a href="aviso-legal.html">Aviso legal</a> · <a href="estadisticas.html">Equipo</a> · <a href="aviso-legal.html#proteccion-datos">Política de privacidad</a> · <a href="#" id="jobModalTrigger">Trabaja con nosotros</a></div>
 </footer>
 
+<div class="cookie-banner" id="cookieBanner" style="display:none;">
+  <p>Uso de cookies. <a href="aviso-legal.html">Aviso legal</a> · <a href="aviso-legal.html#proteccion-datos">Más información</a></p>
+  <div class="cookie-actions">
+    <button type="button" class="cookie-accept" id="cookieAccept">Aceptar</button>
+    <button type="button" class="cookie-reject" id="cookieReject">Rechazar</button>
+  </div>
+</div>
+
 <a href="#" id="floatWaBtn" class="wa-float" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
   <svg width="28" height="28" viewBox="0 0 24 24" fill="#0b3d21"><path d="M17.6 6.32A8.86 8.86 0 0012.05 4a8.94 8.94 0 00-7.75 13.4L3 21l3.7-1.28a8.9 8.9 0 004.33 1.13h.02a8.94 8.94 0 006.55-15.13zm-5.55 13.7h-.01a7.4 7.4 0 01-3.78-1.04l-.27-.16-2.8.98.94-2.73-.18-.28a7.44 7.44 0 1113.85-3.87 7.44 7.44 0 01-7.75 7.1zm4.08-5.56c-.22-.11-1.32-.65-1.53-.73-.2-.08-.35-.11-.5.11-.15.22-.58.73-.71.88-.13.15-.26.16-.48.05a6.1 6.1 0 01-1.8-1.11 6.75 6.75 0 01-1.24-1.54c-.13-.22 0-.34.1-.45.1-.1.22-.26.33-.4.11-.13.15-.22.22-.37.07-.15.04-.28-.02-.4-.06-.11-.5-1.2-.68-1.65-.18-.43-.36-.37-.5-.38h-.43c-.15 0-.4.06-.6.28-.2.22-.79.77-.79 1.87s.81 2.17.92 2.32c.11.15 1.6 2.44 3.87 3.42.54.23.96.37 1.29.48.54.17 1.03.15 1.42.09.43-.06 1.32-.54 1.51-1.06.19-.52.19-.96.13-1.06-.05-.1-.2-.16-.42-.27z"/></svg>
 </a>
@@ -853,6 +880,62 @@
         body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null, session_id: sid })
       }).catch(() => {});
     } catch (e) {}
+  })();
+
+  /* ======================= COOKIES DE SEGUIMIENTO (con consentimiento) ======================= */
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = name + "=" + encodeURIComponent(value) + "; expires=" + expires + "; path=/; SameSite=Lax";
+  }
+
+  function trackVisitorWithConsent() {
+    try {
+      let visitorId = getCookie("ct_visitor_id");
+      if (!visitorId) {
+        visitorId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+        setCookie("ct_visitor_id", visitorId, 365);
+      }
+      fetch(SUPABASE_URL + "/functions/v1/track-visitor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          visitor_id: visitorId,
+          user_agent: navigator.userAgent,
+          language: navigator.language,
+          screen_w: screen.width,
+          screen_h: screen.height,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          path: location.pathname
+        })
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  (function initCookieBanner() {
+    const banner = document.getElementById("cookieBanner");
+    const consent = getCookie("ct_consent");
+    if (consent === "accepted") {
+      trackVisitorWithConsent();
+    } else if (consent !== "rejected") {
+      banner.style.display = "flex";
+    }
+    document.getElementById("cookieAccept").addEventListener("click", () => {
+      setCookie("ct_consent", "accepted", 365);
+      banner.style.display = "none";
+      trackVisitorWithConsent();
+    });
+    document.getElementById("cookieReject").addEventListener("click", () => {
+      setCookie("ct_consent", "rejected", 365);
+      banner.style.display = "none";
+    });
   })();
 
   /* ======================= DATA ======================= */
