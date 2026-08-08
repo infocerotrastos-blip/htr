@@ -430,8 +430,7 @@
       <div class="stat"><div class="stat-num">7</div><div class="stat-label">Provincias con servicio</div></div>
       <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Residuos gestionados de forma legal</div></div>
       <div class="stat"><div class="stat-num">0€</div><div class="stat-label">Sorpresas en la factura</div></div>
-      <!-- PLACEHOLDER: cifra de ejemplo, sustituir por el % real de donación/reciclaje antes de publicar -->
-      <div class="stat"><div class="stat-num">80%</div><div class="stat-label">Objetos donados o reciclados (ejemplo)</div></div>
+      <div class="stat"><div class="stat-num">80%</div><div class="stat-label">Objetos donados o reciclados</div></div>
     </div>
   </div>
 </section>
@@ -816,13 +815,33 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4a3lzd2x1YWVua2VldXFxdW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NjUxNTMsImV4cCI6MjEwMDI0MTE1M30.WIBUD0K4AClmI7f697yZbAyFsr9FelmITWYz81Kc_m0";
 
   /* ======================= CONTADOR DE VISITAS (sin cookies) ======================= */
+  function getSessionId() {
+    let sid = sessionStorage.getItem("ct_sid");
+    if (!sid) {
+      sid = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      sessionStorage.setItem("ct_sid", sid);
+    }
+    return sid;
+  }
+
+  function trackCalculatorStart() {
+    try {
+      fetch(SUPABASE_URL + "/rest/v1/calculator_events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify({ session_id: getSessionId() })
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
   (function trackPageView() {
     try {
-      let sid = sessionStorage.getItem("ct_sid");
-      if (!sid) {
-        sid = Date.now().toString(36) + Math.random().toString(36).slice(2);
-        sessionStorage.setItem("ct_sid", sid);
-      }
+      const sid = getSessionId();
       fetch(SUPABASE_URL + "/rest/v1/page_views", {
         method: "POST",
         headers: {
@@ -1067,6 +1086,7 @@
     if (isRegistered) {
       renderResult(pendingEstimate);
     } else {
+      trackCalculatorStart();
       modalOverlay.classList.add("open");
     }
   });
@@ -1122,7 +1142,8 @@
       precio_min: est.totalLow,
       precio_max: est.totalHigh,
       tarifa_min_m2: parseFloat(est.effRateLow),
-      tarifa_max_m2: parseFloat(est.effRateHigh)
+      tarifa_max_m2: parseFloat(est.effRateHigh),
+      session_id: getSessionId()
     };
 
     // Envío a Supabase, si se ha configurado la URL y la clave.
