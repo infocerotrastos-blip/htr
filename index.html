@@ -921,20 +921,32 @@
 
   (function initCookieBanner() {
     const banner = document.getElementById("cookieBanner");
+    const waFloat = document.getElementById("floatWaBtn");
+
+    function repositionWaFloat() {
+      if (!waFloat) return;
+      const visible = getComputedStyle(banner).display !== "none";
+      waFloat.style.bottom = visible ? (banner.offsetHeight + 22 + 12) + "px" : "";
+    }
+
     const consent = getCookie("ct_consent");
     if (consent === "accepted") {
       trackVisitorWithConsent();
     } else if (consent !== "rejected") {
       banner.style.display = "flex";
+      requestAnimationFrame(repositionWaFloat);
+      window.addEventListener("resize", repositionWaFloat);
     }
     document.getElementById("cookieAccept").addEventListener("click", () => {
       setCookie("ct_consent", "accepted", 365);
       banner.style.display = "none";
+      repositionWaFloat();
       trackVisitorWithConsent();
     });
     document.getElementById("cookieReject").addEventListener("click", () => {
       setCookie("ct_consent", "rejected", 365);
       banner.style.display = "none";
+      repositionWaFloat();
     });
   })();
 
