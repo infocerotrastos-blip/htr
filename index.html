@@ -243,8 +243,8 @@
   /* Zonas */
   .zonas-grid{display:flex; flex-wrap:wrap; gap:12px; margin-top:28px;}
   .zona-badge{
-    background:var(--surface-raised); border:1px solid var(--hairline); border-radius:999px;
-    padding:10px 20px; font-size:14px; font-weight:500; color:var(--ink);
+    background:var(--brand); border:1px solid var(--brand); border-radius:999px;
+    padding:10px 20px; font-size:14px; font-weight:600; color:#fff;
   }
   .zona-badge.hub{background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600;}
 
@@ -567,9 +567,7 @@
       </div>
 
       <div class="calc-result-col">
-        <div id="resultPlaceholder" class="result-placeholder">
-          Rellena los datos y pulsa «Ver mi presupuesto estimado». Te pediremos un par de datos de contacto para poder enviarte el desglose.
-        </div>
+        <div id="resultPlaceholder" class="result-placeholder"></div>
         <div id="resultBox" class="result-box" style="display:none;">
           <div class="result-sub" style="font-weight:600; margin-bottom:4px;">Total estimado (IVA del 21% incluido)</div>
           <div class="result-range" id="resultRange">0 € – 0 €</div>
