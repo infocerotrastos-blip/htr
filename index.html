@@ -150,6 +150,42 @@
   .service-card h3{font-size:19px;}
   .service-card p{font-size:14px; color:var(--ink-soft); margin:0;}
 
+  /* La limpieza es el servicio complementario: se distingue en azul para que
+     se vea sin restar protagonismo a los cuatro tipos de vaciado. */
+  .service-card.is-clean{border-color:var(--clean); background:linear-gradient(160deg, var(--clean-soft) 0%, var(--surface-raised) 62%);}
+  .service-card.is-clean .num{color:var(--clean);}
+  .service-card.is-clean .icon-circle{
+    background:linear-gradient(150deg, rgba(30,95,140,.18), rgba(30,95,140,.05));
+    color:var(--clean);
+  }
+  .service-card.is-clean:hover{border-color:var(--clean); box-shadow:0 20px 36px -26px rgba(30,95,140,.5);}
+  .card-tag{
+    align-self:flex-start; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    background:var(--clean); color:#fff; padding:3px 9px; border-radius:999px;
+  }
+  .card-link{margin-top:auto; padding-top:4px; font-size:13.5px; font-weight:600; color:var(--clean);}
+  .card-link::after{content:" →";}
+  .service-card.is-clean:hover .card-link{text-decoration:underline;}
+  /* Separadores de grupo dentro de Servicios */
+  .group-label{
+    display:flex; align-items:center; gap:12px; margin:34px 0 -6px;
+    font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);
+  }
+  .group-label::after{content:""; flex:1; height:1px; background:var(--hairline);}
+  .group-label.clean{color:var(--clean);}
+  /* Tarjeta de limpieza en formato ancho, para que se lea como complemento
+     y no como un quinto tipo de vaciado. */
+  .clean-banner{
+    flex-direction:row; align-items:center; gap:22px; margin-top:18px; text-decoration:none;
+  }
+  .clean-banner .clean-banner-text{flex:1; min-width:0;}
+  .clean-banner h3{margin:0 0 4px;}
+  .clean-banner .card-link{margin-top:0; white-space:nowrap;}
+  @media(max-width:720px){
+    .clean-banner{flex-direction:column; align-items:flex-start; gap:12px;}
+    .clean-banner .card-link{white-space:normal;}
+  }
+
   /* Process */
   .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:40px; position:relative;}
   @media(max-width:900px){ .steps{grid-template-columns:1fr; gap:28px;} }
@@ -431,7 +467,6 @@
       <a href="#servicios">Servicios</a>
       <a href="#proceso">Cómo funciona</a>
       <a href="#calculadora">Calculadora</a>
-      <a href="#limpieza">Limpieza</a>
       <a href="#zonas">Zonas</a>
     </nav>
     <a class="btn btn-whatsapp" id="headerWaBtn" href="#" target="_blank" rel="noopener">
@@ -481,7 +516,10 @@
 <section id="servicios" class="hairline-top">
   <div class="wrap">
     <span class="eyebrow">Servicios</span>
-    <h2>Un equipo, cinco formas de dejar tu espacio listo</h2>
+    <h2>Cuatro tipos de vaciado, y la limpieza si la necesitas</h2>
+    <p style="color:var(--ink-soft); max-width:62ch;">Lo nuestro es vaciar: viviendas, locales, trasteros y casos de alta acumulación. Si además tienes que entregar el inmueble listo, nos encargamos también de la limpieza final.</p>
+
+    <div class="group-label">Vaciado</div>
     <div class="card-grid">
       <div class="service-card reveal">
         <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></div>
@@ -507,13 +545,17 @@
         <h3>Alta acumulación</h3>
         <p>Casos de acumulación severa (síndrome de Diógenes), tratados con máxima discreción y cuidado.</p>
       </div>
-      <div class="service-card reveal">
-        <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.6 4L16.6 8.6 12.6 10.2 11 14.2 9.4 10.2 5.4 8.6 9.4 7z"/><path d="M18 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/><path d="M5.5 15.5l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3L3.7 17.3l1.3-.5z"/></svg></div>
-        <span class="num">05</span>
+    </div>
+
+    <div class="group-label clean">También limpiamos</div>
+    <a href="#limpieza" class="service-card is-clean clean-banner reveal">
+      <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3l1.6 4L16.6 8.6 12.6 10.2 11 14.2 9.4 10.2 5.4 8.6 9.4 7z"/><path d="M18 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/><path d="M5.5 15.5l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3L3.7 17.3l1.3-.5z"/></svg></div>
+      <div class="clean-banner-text">
         <h3>Limpieza final</h3>
         <p>Viviendas, locales y trasteros listos para vender, alquilar o volver a usar. Con o sin vaciado previo.</p>
       </div>
-    </div>
+      <span class="card-link">Ver el servicio de limpieza</span>
+    </a>
   </div>
 </section>
 
