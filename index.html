@@ -608,7 +608,9 @@
       </div>
 
       <div class="calc-result-col">
-        <div id="resultPlaceholder" class="result-placeholder"></div>
+        <!-- Se quedó sin texto a propósito; oculto para que no se vea un recuadro
+             vacío. El elemento sigue en el DOM porque el JS lo referencia. -->
+        <div id="resultPlaceholder" class="result-placeholder" style="display:none;"></div>
         <div id="resultBox" class="result-box" style="display:none;">
           <span class="result-pill vaciado" id="resultPill">Vaciado</span>
           <div class="result-sub" style="font-weight:600; margin-bottom:4px;">Total estimado (IVA del 21% incluido)</div>
