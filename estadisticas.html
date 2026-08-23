@@ -78,6 +78,30 @@
   .panel h2{font-size:18px; margin:0 0 18px;}
   .empty-msg{color:var(--ink-soft); font-size:14px;}
 
+  /* Tabla de ciudades */
+  .city-scroll{overflow-x:auto;}
+  .city-table{width:100%; border-collapse:collapse; font-size:14px; min-width:420px;}
+  .city-table th{
+    text-align:left; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-soft); padding:0 12px 10px 0; border-bottom:1px solid var(--hairline); white-space:nowrap;
+  }
+  .city-table td{padding:10px 12px 10px 0; border-bottom:1px solid var(--hairline); vertical-align:middle;}
+  .city-table tr:last-child td{border-bottom:none;}
+  .city-table .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .city-name{font-weight:600; color:var(--ink);}
+  .city-sub{color:var(--ink-soft); font-size:12.5px;}
+  .city-bar-cell{width:34%; min-width:110px;}
+  .city-bar{background:var(--hairline); border-radius:999px; height:8px; overflow:hidden;}
+  .city-bar span{display:block; height:100%; background:var(--series-visitas, #2a78d6); border-radius:999px;}
+  .city-flag{font-size:12.5px; color:var(--ink-soft); white-space:nowrap;}
+  /* En móvil quitamos la barra comparativa para que la tabla quepa sin arrastrar. */
+  @media(max-width:560px){
+    .city-table{min-width:0; font-size:13px;}
+    .city-table .city-bar-cell{display:none;}
+    .city-table th{padding-right:8px;}
+    .city-table td{padding:9px 8px 9px 0;}
+  }
+
   /* Gráfico de visitas (últimos 14 días) */
   .viz-root{
     --series-visitas: #2a78d6;
@@ -194,6 +218,14 @@
         </div>
       </div>
       <div class="chart-tooltip" id="chartTooltip"></div>
+
+      <div class="panel">
+        <h2>De dónde nos visitan</h2>
+        <div class="city-scroll">
+          <div id="cityTable"><p class="empty-msg">Cargando…</p></div>
+        </div>
+        <p class="empty-msg" style="margin-top:16px;">Ciudad aproximada a partir de la IP, solo de quienes han aceptado las cookies. No identifica a nadie en concreto: sirve para saber en qué zonas conviene anunciarse.</p>
+      </div>
 
       <p class="empty-msg">Cada fila cuenta una carga de página (sin cookies ni datos personales). "Sesiones" agrupa las páginas vistas por un mismo visitante mientras dure su visita. "Completaron"/"no completaron" se miden a partir de quienes abren el formulario de contacto de la calculadora.</p>
     </div>
@@ -412,17 +444,105 @@
     container.appendChild(svg);
   }
 
+  // Los nombres de país llegan en inglés del proveedor de geolocalización.
+  const PAISES = {
+    "Spain": "España", "United States": "Estados Unidos", "France": "Francia",
+    "Portugal": "Portugal", "Germany": "Alemania", "United Kingdom": "Reino Unido",
+    "Italy": "Italia", "Netherlands": "Países Bajos", "Belgium": "Bélgica",
+    "Ireland": "Irlanda", "Switzerland": "Suiza", "Morocco": "Marruecos",
+    "Romania": "Rumanía", "Poland": "Polonia", "Argentina": "Argentina",
+    "Mexico": "México", "Colombia": "Colombia", "Brazil": "Brasil"
+  };
+
+  function renderCities(rows) {
+    const cont = document.getElementById("cityTable");
+    cont.innerHTML = "";
+
+    if (!rows || !rows.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no hay visitas con ubicación. Aparecerán aquí en cuanto alguien acepte las cookies.</p>';
+      return;
+    }
+
+    const maxVisitas = Math.max.apply(null, rows.map(r => Number(r.visitas) || 0)) || 1;
+
+    const tabla = document.createElement("table");
+    tabla.className = "city-table";
+    tabla.innerHTML =
+      '<thead><tr>' +
+        '<th>Ciudad</th>' +
+        '<th>País</th>' +
+        '<th class="city-bar-cell"></th>' +
+        '<th class="num">Visitas</th>' +
+        '<th class="num">Personas</th>' +
+      '</tr></thead>';
+
+    const tbody = document.createElement("tbody");
+    rows.forEach(r => {
+      const visitas = Number(r.visitas) || 0;
+      const pct = Math.max(3, Math.round((visitas / maxVisitas) * 100));
+      const pais = PAISES[r.pais] || r.pais || "—";
+      const provincia = (r.provincia && r.provincia !== "—") ? r.provincia : "";
+
+      const tr = document.createElement("tr");
+
+      const tdCiudad = document.createElement("td");
+      const nombre = document.createElement("div");
+      nombre.className = "city-name";
+      nombre.textContent = r.ciudad;
+      tdCiudad.appendChild(nombre);
+      if (provincia) {
+        const sub = document.createElement("div");
+        sub.className = "city-sub";
+        sub.textContent = provincia;
+        tdCiudad.appendChild(sub);
+      }
+
+      const tdPais = document.createElement("td");
+      tdPais.className = "city-flag";
+      tdPais.textContent = pais;
+
+      const tdBarra = document.createElement("td");
+      tdBarra.className = "city-bar-cell";
+      const barra = document.createElement("div");
+      barra.className = "city-bar";
+      const relleno = document.createElement("span");
+      relleno.style.width = pct + "%";
+      barra.appendChild(relleno);
+      tdBarra.appendChild(barra);
+
+      const tdVisitas = document.createElement("td");
+      tdVisitas.className = "num";
+      tdVisitas.textContent = visitas.toLocaleString("es-ES");
+
+      const tdPersonas = document.createElement("td");
+      tdPersonas.className = "num";
+      tdPersonas.textContent = (Number(r.visitantes) || 0).toLocaleString("es-ES");
+
+      tr.appendChild(tdCiudad);
+      tr.appendChild(tdPais);
+      tr.appendChild(tdBarra);
+      tr.appendChild(tdVisitas);
+      tr.appendChild(tdPersonas);
+      tbody.appendChild(tr);
+    });
+
+    tabla.appendChild(tbody);
+    cont.appendChild(tabla);
+  }
+
   async function loadDashboard(token) {
     loginView.style.display = "none";
     dashboard.style.display = "block";
     try {
-      const [stats, daily, dailyFunnel] = await Promise.all([
+      const [stats, daily, dailyFunnel, cities] = await Promise.all([
         callRpc("get_visit_stats", token),
         callRpc("get_daily_visit_counts", token, { days: 14 }),
-        callRpc("get_daily_funnel_counts", token, { days: 14 })
+        callRpc("get_daily_funnel_counts", token, { days: 14 }),
+        callRpc("get_visitor_cities", token, { days: 3650 })
       ]);
       renderStats(stats);
       renderDaily(daily, dailyFunnel);
+      renderCities(cities);
     } catch (err) {
       console.error("No se pudieron cargar las estadísticas:", err);
       sessionStorage.removeItem(TOKEN_KEY);
