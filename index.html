@@ -1086,7 +1086,7 @@
     },
     local: {
       label: "Local comercial",
-      rates: { madrid: [11, 15], clm_cyl: [9, 12] }
+      rates: { madrid: [8, 11], clm_cyl: [6.5, 9] }
     },
     trastero: {
       label: "Trastero",
@@ -1094,34 +1094,39 @@
     }
   };
 
-  // Multiplicador por nivel de acumulación (informe de tarificación, apartado 4.2).
+  // Multiplicador por nivel de acumulación. Reescalado el 25/08/2026 tras
+  // comparar con precios publicados de la competencia: "Medio" (ocupación
+  // estándar) pasa a ser la referencia ×1,0 en lugar de ×1,5, que dejaba los
+  // pisos entre un 50% y un 130% por encima del mercado.
   const ACCUMULATION_LEVELS = {
     bajo: {
       label: "Bajo",
       desc: "Espacio con pocos enseres o ya parcialmente vaciado (menos del 30% ocupado).",
-      low: 1.0, high: 1.0
+      low: 0.7, high: 0.7
     },
     medio: {
       label: "Medio",
       desc: "Ocupación estándar: mobiliario y enseres habituales de un piso o local en uso normal.",
-      low: 1.5, high: 1.5
+      low: 1.0, high: 1.0
     },
     alto: {
       label: "Alto",
       desc: "Espacio muy acumulado, con residuo mixto voluminoso y difícil acceso o carga.",
-      low: 2.0, high: 2.0
+      low: 1.35, high: 1.35
     },
     extremo: {
       label: "Extremo",
       desc: "",
-      low: 2.5, high: 3.0
+      low: 1.7, high: 2.0
     }
   };
 
   const SURCHARGE_NO_LIFT = 0.18; // media del 15%-20% que aplica la competencia
   const SURCHARGE_ZBE = 40;       // media de 30€-50€ por gestión de acceso/permisos
   const IVA_RATE = 0.21;          // IVA general repercutido siempre como partida aparte
-  const MIN_SUBTOTAL = 90;        // subtotal mínimo (sin IVA) para cubrir desplazamiento y mínimos de gestión
+  const MIN_SUBTOTAL = 170;       // subtotal mínimo (sin IVA): un desplazamiento con furgoneta,
+                                  // equipo y canon de vertido no baja de ahí. El mercado sitúa el
+                                  // trastero pequeño en torno a 250 € con IVA.
 
   /* ----------------------- LIMPIEZA ----------------------- */
   // Tarifa base (€/m²) del servicio de limpieza, por tipo de inmueble y zona.
