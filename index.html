@@ -1113,7 +1113,7 @@
     },
     extremo: {
       label: "Extremo",
-      desc: "Acumulación severa: requiere EPI, múltiples viajes a vertedero y desinfección con ozono.",
+      desc: "",
       low: 2.5, high: 3.0
     }
   };
@@ -1243,7 +1243,12 @@
 
   function updateTipoDesc() {
     const src = levelSource();
-    tipoDesc.textContent = src[nivelSelect.value] ? src[nivelSelect.value].desc : "";
+    const nivel = src[nivelSelect.value];
+    const texto = (nivel && nivel.desc) || "";
+    tipoDesc.textContent = texto;
+    // Si un nivel no lleva descripción, ocultamos la caja para que no quede
+    // un recuadro vacío bajo el desplegable.
+    tipoDesc.style.display = texto ? "block" : "none";
   }
 
   // Los extras de ozono y cristales solo aplican cuando hay limpieza.
